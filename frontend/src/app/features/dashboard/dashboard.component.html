@@ -1,0 +1,74 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Dashboard</h1>
+      <p class="page-subtitle">Prehľad fakturácie a zárobkov</p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="loading">Načítavam...</div>
+  } @else {
+    <!-- Stats row -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-label">Tento mesiac</div>
+        <div class="stat-value">{{ formatEur(stats()?.month?.amount || 0) }}</div>
+        <div class="stat-sub">{{ stats()?.month?.count || 0 }} faktúr</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Tento rok ({{ currentYear }})</div>
+        <div class="stat-value">{{ formatEur(stats()?.year?.amount || 0) }}</div>
+        <div class="stat-sub">{{ stats()?.year?.count || 0 }} faktúr</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Celkovo</div>
+        <div class="stat-value">{{ formatEur(stats()?.total?.amount || 0) }}</div>
+        <div class="stat-sub">{{ stats()?.total?.count || 0 }} faktúr</div>
+      </div>
+      <div class="stat-card status-card">
+        <div class="stat-label">Stav faktúr</div>
+        <div class="status-list">
+          <div class="status-row">
+            <span class="badge paid">Zaplatené</span>
+            <span>{{ stats()?.byStatus?.['PAID'] || 0 }}</span>
+          </div>
+          <div class="status-row">
+            <span class="badge sent">Odoslané</span>
+            <span>{{ stats()?.byStatus?.['SENT'] || 0 }}</span>
+          </div>
+          <div class="status-row">
+            <span class="badge draft">Koncepty</span>
+            <span>{{ stats()?.byStatus?.['DRAFT'] || 0 }}</span>
+          </div>
+          <div class="status-row">
+            <span class="badge error">Chyba</span>
+            <span>{{ stats()?.byStatus?.['ERROR'] || 0 }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Earnings chart -->
+    <div class="card chart-card">
+      <div class="chart-header">
+        <h2 class="chart-title">Mesačné zárobky {{ currentYear }}</h2>
+      </div>
+      <div class="bar-chart">
+        @for (e of earnings(); track e.month; let i = $index) {
+          <div class="bar-col">
+            <div class="bar-wrap">
+              <div
+                class="bar"
+                [style.height.%]="barHeight(e.amount)"
+                [class.has-value]="e.amount > 0"
+                [title]="formatEur(e.amount)"
+              ></div>
+            </div>
+            <span class="bar-label">{{ months[i] }}</span>
+          </div>
+        }
+      </div>
+    </div>
+  }
+</div>

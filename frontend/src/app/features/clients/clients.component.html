@@ -1,0 +1,120 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Klienti</h1>
+      <p class="page-subtitle">Správa klientov a hodinových sadzieb</p>
+    </div>
+    <button class="btn btn-primary" (click)="openNew()">+ Nový klient</button>
+  </div>
+
+  <div class="card">
+    @if (loading()) {
+      <div class="empty-state"><p>Načítavam...</p></div>
+    } @else if (!clients().length) {
+      <div class="empty-state">
+        <div class="empty-icon">👥</div>
+        <p>Žiadni klienti</p>
+        <p style="margin-top:4px;font-size:12px">Synchronizuj Toggl alebo pridaj manuálne</p>
+      </div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Klient</th>
+            <th>IČO</th>
+            <th>Email</th>
+            <th>Sadzba</th>
+            <th>Projekty</th>
+            <th>Faktúry</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (c of clients(); track c.id) {
+            <tr>
+              <td>
+                <strong>{{ c.name }}</strong>
+                @if (!c.active) { <span class="badge cancelled" style="margin-left:6px">Neaktívny</span> }
+              </td>
+              <td class="muted">{{ c.ico || '—' }}</td>
+              <td class="muted">{{ c.email || '—' }}</td>
+              <td>
+                @if (c.hourlyRate) {
+                  <span class="rate">{{ c.hourlyRate }} €/hod</span>
+                } @else {
+                  <span class="muted">Default</span>
+                }
+              </td>
+              <td class="muted">{{ c._count?.projects || 0 }}</td>
+              <td class="muted">{{ c._count?.invoices || 0 }}</td>
+              <td>
+                <div class="row-actions">
+                  <button class="btn btn-secondary btn-sm" (click)="openEdit(c)">Upraviť</button>
+                  <button class="btn btn-danger btn-sm" (click)="delete(c)">Zmazať</button>
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>
+
+<!-- Modal form -->
+@if (showForm()) {
+  <div class="modal-backdrop" (click)="showForm.set(false)">
+    <div class="modal" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>{{ editId() ? 'Upraviť klienta' : 'Nový klient' }}</h2>
+        <button class="modal-close" (click)="showForm.set(false)">✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-grid">
+          <div class="form-group">
+            <label class="form-label">Názov *</label>
+            <input class="form-input" [(ngModel)]="form.name" placeholder="Firma s.r.o." />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" [(ngModel)]="form.email" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">IČO</label>
+            <input class="form-input" [(ngModel)]="form.ico" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">DIČ</label>
+            <input class="form-input" [(ngModel)]="form.dic" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">IČ DPH</label>
+            <input class="form-input" [(ngModel)]="form.icDph" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Hodinová sadzba (€)</label>
+            <input class="form-input" type="number" [(ngModel)]="form.hourlyRate" placeholder="Použije sa default" />
+          </div>
+          <div class="form-group span-2">
+            <label class="form-label">Adresa</label>
+            <input class="form-input" [(ngModel)]="form.address" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">Mesto</label>
+            <input class="form-input" [(ngModel)]="form.city" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">PSČ</label>
+            <input class="form-input" [(ngModel)]="form.zipCode" />
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" (click)="showForm.set(false)">Zrušiť</button>
+        <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !form.name">
+          {{ saving() ? 'Ukladám...' : 'Uložiť' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,76 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Faktúry</h1>
+      <p class="page-subtitle">{{ total() }} faktúr celkovo</p>
+    </div>
+    <div class="header-actions">
+      <select class="form-select" [(ngModel)]="genMonth">
+        @for (m of months; track $index) {
+          <option [value]="$index + 1">{{ m }}</option>
+        }
+      </select>
+      <input class="form-input" type="number" [(ngModel)]="genYear" style="width:80px" />
+      <button class="btn btn-primary" (click)="generate()" [disabled]="generating()">
+        {{ generating() ? 'Generujem...' : '+ Generovať faktúry' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    @if (loading()) {
+      <div class="empty-state"><p>Načítavam faktúry...</p></div>
+    } @else if (!invoices().length) {
+      <div class="empty-state">
+        <div class="empty-icon">🧾</div>
+        <p>Žiadne faktúry</p>
+        <p style="margin-top: 4px; font-size: 12px;">Vygeneruj faktúry za vybraný mesiac</p>
+      </div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Klient</th>
+            <th>Obdobie</th>
+            <th>Hodiny</th>
+            <th>Celkom</th>
+            <th>Stav</th>
+            <th>Dátum</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (inv of invoices(); track inv.id) {
+            <tr>
+              <td><strong>{{ inv.client?.name || '—' }}</strong></td>
+              <td class="muted">
+                {{ formatDate(inv.periodFrom) }} – {{ formatDate(inv.periodTo) }}
+              </td>
+              <td>{{ (+inv.totalHours).toFixed(2) }} hod</td>
+              <td><strong>{{ formatEur(+inv.total) }}</strong></td>
+              <td>
+                <span class="badge {{ inv.status.toLowerCase() }}">
+                  {{ statusLabel(inv.status) }}
+                </span>
+              </td>
+              <td class="muted">{{ formatDate(inv.issueDate) }}</td>
+              <td>
+                <div class="row-actions">
+                  @if (inv.status === 'DRAFT') {
+                    <button class="btn btn-secondary btn-sm" (click)="send(inv)">Odoslať</button>
+                  }
+                  @if (inv.status === 'SENT') {
+                    <button class="btn btn-secondary btn-sm" (click)="markPaid(inv)">Zaplatené</button>
+                  }
+                  @if (inv.status === 'DRAFT' || inv.status === 'ERROR') {
+                    <button class="btn btn-danger btn-sm" (click)="delete(inv)">Zmazať</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

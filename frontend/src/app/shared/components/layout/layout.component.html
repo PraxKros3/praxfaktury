@@ -1,0 +1,42 @@
+<div class="app-shell">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="logo">
+        <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+          <rect width="32" height="32" rx="8" fill="#6366f1"/>
+          <path d="M8 22L14 10L20 18L24 14" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span class="logo-text">NIF</span>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      @for (item of navItems; track item.path) {
+        <a [routerLink]="item.path" routerLinkActive="active" class="nav-item">
+          <span class="nav-icon" [innerHTML]="getIcon(item.icon)"></span>
+          <span class="nav-label">{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="sidebar-footer">
+      <button class="sync-btn" (click)="syncToggl()" [disabled]="syncing()">
+        <span class="sync-icon" [class.spinning]="syncing()">↻</span>
+        {{ syncing() ? 'Synchronizujem...' : 'Sync Toggl' }}
+      </button>
+      @if (syncMessage()) {
+        <p class="sync-message">{{ syncMessage() }}</p>
+      }
+      <div class="user-info">
+        <span class="user-email">{{ auth.user()?.email }}</span>
+        <button class="logout-btn" (click)="auth.logout()">Odhlásiť</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="main-content">
+    <router-outlet />
+  </main>
+</div>

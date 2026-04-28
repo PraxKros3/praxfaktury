@@ -1,0 +1,65 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Projekty</h1>
+      <p class="page-subtitle">Projekty synchronizované z Toggl</p>
+    </div>
+  </div>
+
+  <div class="card">
+    @if (loading()) {
+      <div class="empty-state"><p>Načítavam...</p></div>
+    } @else if (!projects().length) {
+      <div class="empty-state">
+        <div class="empty-icon">📁</div>
+        <p>Žiadne projekty</p>
+        <p style="margin-top:4px;font-size:12px">Synchronizuj Toggl pre načítanie projektov</p>
+      </div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Projekt</th>
+            <th>Klient</th>
+            <th>Sadzba (€/hod)</th>
+            <th>Stav</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (p of projects(); track p.id) {
+            <tr>
+              <td>
+                <div class="project-name">
+                  @if (p.color) {
+                    <span class="dot" [style.background]="p.color"></span>
+                  }
+                  {{ p.name }}
+                </div>
+              </td>
+              <td class="muted">{{ p.client?.name || '—' }}</td>
+              <td>
+                @if (editingId() === p.id) {
+                  <div class="edit-rate">
+                    <input class="form-input" type="number" [ngModel]="editRate()" (ngModelChange)="editRate.set($event)" style="width:100px" />
+                    <button class="btn btn-primary btn-sm" (click)="saveRate(p)">Uložiť</button>
+                    <button class="btn btn-secondary btn-sm" (click)="editingId.set(null)">Zrušiť</button>
+                  </div>
+                } @else {
+                  <span class="rate-cell" (click)="startEdit(p)">
+                    {{ p.hourlyRate ? (p.hourlyRate + ' €') : 'Default' }}
+                    <span class="edit-hint">✎</span>
+                  </span>
+                }
+              </td>
+              <td>
+                <span class="badge" [class.paid]="p.active" [class.cancelled]="!p.active">
+                  {{ p.active ? 'Aktívny' : 'Archivovaný' }}
+                </span>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

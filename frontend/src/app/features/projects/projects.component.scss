@@ -1,0 +1,39 @@
+.muted { color: var(--text-muted); }
+
+.project-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dot {
+  width: 10px; height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.rate-cell {
+  cursor: pointer;
+  color: var(--primary-light);
+  font-weight: 500;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: background 0.15s;
+  &:hover { background: rgba(99,102,241,0.1); }
+}
+
+.edit-hint {
+  font-size: 11px;
+  color: var(--text-dim);
+  opacity: 0;
+  .rate-cell:hover & { opacity: 1; }
+}
+
+.edit-rate {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}

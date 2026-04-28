@@ -1,0 +1,114 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Nastavenia</h1>
+      <p class="page-subtitle">API kľúče a fakturačné parametre</p>
+    </div>
+  </div>
+
+  <div class="settings-grid">
+    <!-- Toggl section -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon">⏱</span>
+        Toggl Track
+      </h2>
+      <p class="section-desc">Nájdeš ho na <strong>toggl.com → Profile → API token</strong></p>
+
+      <div class="form-stack">
+        <div class="form-group">
+          <label class="form-label">API Token</label>
+          <div class="token-input">
+            <input
+              class="form-input"
+              [type]="showTogglToken() ? 'text' : 'password'"
+              [(ngModel)]="form.togglApiToken"
+              placeholder="Toggl API token"
+              autocomplete="off"
+            />
+            <button class="toggle-btn" (click)="showTogglToken.set(!showTogglToken())">
+              {{ showTogglToken() ? '🙈' : '👁' }}
+            </button>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Workspace ID</label>
+          <input class="form-input" [(ngModel)]="form.togglWorkspaceId" placeholder="Napr. 1234567" />
+          <span class="hint">toggl.com → Settings → Workspace ID</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- KROS section -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon">🧾</span>
+        KROS OpenAPI
+      </h2>
+      <p class="section-desc">Vytvor token v KROS → <strong>Nastavenia → API prepojenia</strong></p>
+
+      <div class="form-stack">
+        <div class="form-group">
+          <label class="form-label">Bearer Token</label>
+          <div class="token-input">
+            <input
+              class="form-input"
+              [type]="showKrosToken() ? 'text' : 'password'"
+              [(ngModel)]="form.krosApiToken"
+              placeholder="KROS Bearer token"
+              autocomplete="off"
+            />
+            <button class="toggle-btn" (click)="showKrosToken.set(!showKrosToken())">
+              {{ showKrosToken() ? '🙈' : '👁' }}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Billing defaults -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon">💰</span>
+        Fakturačné nastavenia
+      </h2>
+
+      <div class="form-stack">
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Default hodinová sadzba (€)</label>
+            <input class="form-input" type="number" [(ngModel)]="form.defaultHourlyRate" placeholder="Napr. 50" />
+          </div>
+          <div class="form-group">
+            <label class="form-label">DPH sadzba (%)</label>
+            <input class="form-input" type="number" [(ngModel)]="form.defaultVatRate" placeholder="23" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Mena</label>
+            <select class="form-select" [(ngModel)]="form.currency">
+              <option value="EUR">EUR (€)</option>
+              <option value="CZK">CZK (Kč)</option>
+              <option value="USD">USD ($)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Splatnosť (dni)</label>
+            <input class="form-input" type="number" [(ngModel)]="form.invoiceDueDays" placeholder="14" />
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Save button -->
+    <div class="save-row">
+      @if (saved()) {
+        <span class="saved-msg">✓ Nastavenia uložené</span>
+      }
+      <button class="btn btn-primary" (click)="save()" [disabled]="saving()">
+        {{ saving() ? 'Ukladám...' : 'Uložiť nastavenia' }}
+      </button>
+    </div>
+  </div>
+</div>

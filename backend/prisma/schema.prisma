@@ -1,0 +1,181 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  togglApiToken     String?
+  togglWorkspaceId  String?
+  krosApiToken      String?
+  defaultHourlyRate Decimal? @db.Decimal(10, 2)
+  defaultVatRate    Decimal  @db.Decimal(5, 2) @default(23)
+  currency          String   @default("EUR")
+  invoiceDueDays    Int      @default(14)
+
+  clients    Client[]
+  projects   Project[]
+  invoices   Invoice[]
+  auditLogs  AuditLog[]
+  syncLogs   SyncLog[]
+}
+
+model Client {
+  id     String @id @default(cuid())
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  togglId    String?
+  krosId     String?
+  name       String
+  email      String?
+  ico        String?
+  dic        String?
+  icDph      String?
+  address    String?
+  city       String?
+  zipCode    String?
+  country    String  @default("SK")
+  hourlyRate Decimal? @db.Decimal(10, 2)
+  active     Boolean  @default(true)
+  notes      String?
+
+  projects Project[]
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, togglId])
+}
+
+model Project {
+  id       String  @id @default(cuid())
+  userId   String
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+
+  togglId    String?
+  name       String
+  hourlyRate Decimal? @db.Decimal(10, 2)
+  color      String?
+  active     Boolean  @default(true)
+
+  timeEntries TimeEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, togglId])
+}
+
+model TimeEntry {
+  id        String   @id @default(cuid())
+  projectId String?
+  project   Project? @relation(fields: [projectId], references: [id])
+
+  togglId     String   @unique
+  description String?
+  startTime   DateTime
+  endTime     DateTime?
+  duration    Int
+  billable    Boolean  @default(true)
+  invoiced    Boolean  @default(false)
+  invoiceId   String?
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model Invoice {
+  id       String @id @default(cuid())
+  userId   String
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  krosRequestId  String?
+  krosDocumentId String?
+  documentNumber String?
+  variableSymbol String?
+
+  status     InvoiceStatus @default(DRAFT)
+  periodFrom DateTime
+  periodTo   DateTime
+  issueDate  DateTime
+  dueDate    DateTime
+
+  totalHours Decimal @db.Decimal(10, 2)
+  hourlyRate Decimal @db.Decimal(10, 2)
+  subtotal   Decimal @db.Decimal(10, 2)
+  vatRate    Decimal @db.Decimal(5, 2)
+  vatAmount  Decimal @db.Decimal(10, 2)
+  total      Decimal @db.Decimal(10, 2)
+  currency   String  @default("EUR")
+  notes      String?
+
+  items       InvoiceItem[]
+  timeEntries TimeEntry[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  description String
+  quantity    Decimal @db.Decimal(10, 2)
+  unit        String  @default("hod")
+  unitPrice   Decimal @db.Decimal(10, 2)
+  total       Decimal @db.Decimal(10, 2)
+}
+
+model SyncLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      SyncType
+  status    String
+  message   String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  action    String
+  entity    String
+  entityId  String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+}
+
+enum InvoiceStatus {
+  DRAFT
+  PENDING
+  PROCESSING
+  SENT
+  PAID
+  ERROR
+  CANCELLED
+}
+
+enum SyncType {
+  TOGGL
+  KROS
+}
