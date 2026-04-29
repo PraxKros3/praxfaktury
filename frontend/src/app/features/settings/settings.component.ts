@@ -33,6 +33,14 @@ export class SettingsComponent implements OnInit {
         defaultVatRate: u.defaultVatRate,
         currency: u.currency || 'EUR',
         invoiceDueDays: u.invoiceDueDays || 14,
+        supplierName: u.supplierName || '',
+        supplierIco: u.supplierIco || '',
+        supplierDic: u.supplierDic || '',
+        supplierIcDph: u.supplierIcDph || '',
+        supplierAddress: u.supplierAddress || '',
+        supplierCity: u.supplierCity || '',
+        supplierZip: u.supplierZip || '',
+        supplierIban: u.supplierIban || '',
       };
     }
   }

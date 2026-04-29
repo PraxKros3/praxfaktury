@@ -12,6 +12,7 @@ import { InvoicesModule } from './invoices/invoices.module';
 import { TogglModule } from './toggl/toggl.module';
 import { KrosModule } from './kros/kros.module';
 import { CronModule } from './cron/cron.module';
+import { ManualEntriesModule } from './manual-entries/manual-entries.module';
 
 @Module({
   imports: [
@@ -28,6 +29,7 @@ import { CronModule } from './cron/cron.module';
     TogglModule,
     KrosModule,
     CronModule,
+    ManualEntriesModule,
   ],
 })
 export class AppModule {}

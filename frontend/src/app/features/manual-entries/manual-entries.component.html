@@ -1,0 +1,130 @@
+<div class="page fade-in">
+  <div class="page-header">
+    <div>
+      <h1 class="page-title">Zákazky</h1>
+      <p class="page-subtitle">{{ totalHours }} hod · {{ formatEur(totalAmount) }}</p>
+    </div>
+    <div class="header-actions">
+      <select class="form-select" [(ngModel)]="filterMonth" (change)="load()">
+        @for (m of months; track $index) {
+          <option [value]="$index + 1">{{ m }}</option>
+        }
+      </select>
+      <input class="form-input" type="number" [(ngModel)]="filterYear" (change)="load()" style="width:80px" />
+      <button class="btn btn-primary" (click)="openForm()">+ Nová zákazka</button>
+    </div>
+  </div>
+
+  <!-- Form modal -->
+  @if (showForm()) {
+    <div class="modal-overlay" (click)="closeForm()">
+      <div class="modal-card" (click)="$event.stopPropagation()">
+        <h2 class="modal-title">{{ editingId() ? 'Upraviť zákazku' : 'Nová zákazka' }}</h2>
+
+        <div class="form-stack">
+          <div class="form-group">
+            <label class="form-label">Názov služby *</label>
+            <input class="form-input" [(ngModel)]="form.serviceName" placeholder="napr. Backend development" />
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Dátum vykonania *</label>
+              <input class="form-input" type="date" [(ngModel)]="form.performedAt" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Počet hodín *</label>
+              <input class="form-input" type="number" [(ngModel)]="form.hours" min="0.25" step="0.25" />
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">Hodinová sadzba (€) *</label>
+              <input class="form-input" type="number" [(ngModel)]="form.hourlyRate" min="0" />
+            </div>
+            <div class="form-group">
+              <label class="form-label">Klient</label>
+              <select class="form-select" [(ngModel)]="form.clientId">
+                <option value="">— bez klienta —</option>
+                @for (c of clients(); track c.id) {
+                  <option [value]="c.id">{{ c.name }}</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Poznámka</label>
+            <input class="form-input" [(ngModel)]="form.notes" placeholder="Voliteľný popis" />
+          </div>
+          <div class="form-summary">
+            Spolu: <strong>{{ formatEur(+form.hours * +form.hourlyRate) }}</strong>
+          </div>
+        </div>
+
+        <div class="modal-actions">
+          <button class="btn btn-secondary" (click)="closeForm()">Zrušiť</button>
+          <button class="btn btn-primary" (click)="save()" [disabled]="saving() || !form.serviceName">
+            {{ saving() ? 'Ukladám...' : 'Uložiť' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- List -->
+  <div class="card">
+    @if (loading()) {
+      <div class="empty-state"><p>Načítavam zákazky...</p></div>
+    } @else if (!entries().length) {
+      <div class="empty-state">
+        <div class="empty-icon">📋</div>
+        <p>Žiadne zákazky za {{ months[filterMonth - 1] }} {{ filterYear }}</p>
+        <p style="margin-top:4px;font-size:12px">Klikni "+ Nová zákazka" pre pridanie</p>
+      </div>
+    } @else {
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Služba</th>
+            <th>Klient</th>
+            <th>Dátum</th>
+            <th>Hodiny</th>
+            <th>Sadzba</th>
+            <th>Spolu</th>
+            <th>Stav</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (e of entries(); track e.id) {
+            <tr [class.invoiced-row]="e.invoiced">
+              <td>
+                <strong>{{ e.serviceName }}</strong>
+                @if (e.notes) { <div class="muted" style="font-size:12px">{{ e.notes }}</div> }
+              </td>
+              <td class="muted">{{ e.client?.name || '—' }}</td>
+              <td class="muted">{{ formatDate(e.performedAt) }}</td>
+              <td>{{ (+e.hours).toFixed(2) }} hod</td>
+              <td class="muted">{{ formatEur(+e.hourlyRate) }}/hod</td>
+              <td><strong>{{ formatEur(+e.hours * +e.hourlyRate) }}</strong></td>
+              <td>
+                @if (e.invoiced) {
+                  <span class="badge sent">Zafakturované</span>
+                } @else {
+                  <span class="badge draft">Nezafakturované</span>
+                }
+              </td>
+              <td>
+                <div class="row-actions">
+                  @if (!e.invoiced) {
+                    <button class="btn btn-secondary btn-sm" (click)="openForm(e)">Upraviť</button>
+                    <button class="btn btn-danger btn-sm" (click)="remove(e)">Zmazať</button>
+                  }
+                </div>
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    }
+  </div>
+</div>

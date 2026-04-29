@@ -44,4 +44,13 @@ export class UpdateSettingsDto {
   @IsNumber()
   @Min(1)
   invoiceDueDays?: number;
+
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierIco?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierDic?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierIcDph?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierAddress?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierCity?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierZip?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() supplierIban?: string;
 }

@@ -1,8 +1,12 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { Router } from '@angular/router';
 import { ApiService } from '../../core/services/api.service';
+import { AuthService } from '../../core/services/auth.service';
 import { Invoice, InvoiceStatus } from '../../core/models';
+
+const BACKEND = 'http://localhost:3000/api';
 
 @Component({
   selector: 'app-invoices',
@@ -26,7 +30,12 @@ export class InvoicesComponent implements OnInit {
     'Júl','August','September','Október','November','December'
   ];
 
-  constructor(private api: ApiService) {}
+  constructor(private api: ApiService, private router: Router, private auth: AuthService) {}
+
+  printInvoice(invoice: Invoice) {
+    const token = this.auth.getToken();
+    window.open(`${BACKEND}/invoices/${invoice.id}/print-page?token=${token}`, '_blank');
+  }
 
   ngOnInit() { this.load(); }
 

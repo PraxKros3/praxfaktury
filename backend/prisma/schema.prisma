@@ -22,11 +22,21 @@ model User {
   currency          String   @default("EUR")
   invoiceDueDays    Int      @default(14)
 
-  clients    Client[]
-  projects   Project[]
-  invoices   Invoice[]
-  auditLogs  AuditLog[]
-  syncLogs   SyncLog[]
+  supplierName    String?
+  supplierIco     String?
+  supplierDic     String?
+  supplierIcDph   String?
+  supplierAddress String?
+  supplierCity    String?
+  supplierZip     String?
+  supplierIban    String?
+
+  clients       Client[]
+  projects      Project[]
+  invoices      Invoice[]
+  auditLogs     AuditLog[]
+  syncLogs      SyncLog[]
+  manualEntries ManualEntry[]
 }
 
 model Client {
@@ -49,8 +59,9 @@ model Client {
   active     Boolean  @default(true)
   notes      String?
 
-  projects Project[]
-  invoices Invoice[]
+  projects      Project[]
+  invoices      Invoice[]
+  manualEntries ManualEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -124,8 +135,9 @@ model Invoice {
   currency   String  @default("EUR")
   notes      String?
 
-  items       InvoiceItem[]
-  timeEntries TimeEntry[]
+  items         InvoiceItem[]
+  timeEntries   TimeEntry[]
+  manualEntries ManualEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -173,6 +185,27 @@ enum InvoiceStatus {
   PAID
   ERROR
   CANCELLED
+}
+
+model ManualEntry {
+  id     String  @id @default(cuid())
+  userId String
+  user   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  clientId String?
+  client   Client? @relation(fields: [clientId], references: [id])
+
+  serviceName String
+  hourlyRate  Decimal  @db.Decimal(10, 2)
+  performedAt DateTime
+  hours       Decimal  @db.Decimal(10, 2)
+  notes       String?
+
+  invoiced  Boolean  @default(false)
+  invoiceId String?
+  invoice   Invoice? @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum SyncType {

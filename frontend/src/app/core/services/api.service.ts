@@ -3,7 +3,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import {
   Client, Project, Invoice, Stats, MonthlyEarning,
-  TimeEntry, User, PagedResult
+  TimeEntry, User, PagedResult, ManualEntry
 } from '../models';
 
 const API = 'http://localhost:3000/api';
@@ -83,6 +83,23 @@ export class ApiService {
   }
   deleteInvoice(id: string): Observable<void> {
     return this.http.delete<void>(`${API}/invoices/${id}`);
+  }
+
+  // Manual Entries
+  getManualEntries(month?: number, year?: number): Observable<ManualEntry[]> {
+    let params = new HttpParams();
+    if (month) params = params.set('month', month);
+    if (year) params = params.set('year', year);
+    return this.http.get<ManualEntry[]>(`${API}/manual-entries`, { params });
+  }
+  createManualEntry(data: Partial<ManualEntry>): Observable<ManualEntry> {
+    return this.http.post<ManualEntry>(`${API}/manual-entries`, data);
+  }
+  updateManualEntry(id: string, data: Partial<ManualEntry>): Observable<ManualEntry> {
+    return this.http.patch<ManualEntry>(`${API}/manual-entries/${id}`, data);
+  }
+  deleteManualEntry(id: string): Observable<void> {
+    return this.http.delete<void>(`${API}/manual-entries/${id}`);
   }
 
   // Toggl

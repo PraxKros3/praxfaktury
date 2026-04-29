@@ -1,0 +1,98 @@
+@if (loading) {
+  <p style="padding:40px;text-align:center">Načítavam faktúru...</p>
+}
+@if (error) {
+  <p style="padding:40px;text-align:center;color:red">Faktúru sa nepodarilo načítať. Skúste zatvoriť toto okno a otvoriť PDF znova.</p>
+}
+@if (invoice) {
+  <div class="print-btn no-print">
+    <button (click)="print()">🖨 Tlačiť / Uložiť ako PDF</button>
+  </div>
+}
+
+@if (invoice) {
+<div class="invoice">
+  <div class="header">
+    <div class="header-left">
+      <h1>FAKTÚRA</h1>
+      @if (invoice.documentNumber) {
+        <div class="doc-number">č. {{ invoice.documentNumber }}</div>
+      }
+    </div>
+    <div class="header-right">
+      <div class="label">Dátum vystavenia</div>
+      <div class="value">{{ formatDate(invoice.issueDate) }}</div>
+      <div class="label" style="margin-top:8px">Dátum splatnosti</div>
+      <div class="value">{{ formatDate(invoice.dueDate) }}</div>
+      @if (invoice.variableSymbol) {
+        <div class="label" style="margin-top:8px">Variabilný symbol</div>
+        <div class="value">{{ invoice.variableSymbol }}</div>
+      }
+    </div>
+  </div>
+
+  <div class="parties">
+    <div class="party">
+      <div class="party-title">Dodávateľ</div>
+      <div class="party-name">— doplniť v nastaveniach —</div>
+    </div>
+    <div class="party">
+      <div class="party-title">Odberateľ</div>
+      <div class="party-name">{{ invoice.client?.name }}</div>
+      @if (invoice.client?.ico) { <div>IČO: {{ invoice.client?.ico }}</div> }
+      @if (invoice.client?.dic) { <div>DIČ: {{ invoice.client?.dic }}</div> }
+      @if (invoice.client?.icDph) { <div>IČ DPH: {{ invoice.client?.icDph }}</div> }
+      @if (invoice.client?.address) {
+        <div style="margin-top:4px">{{ invoice.client?.address }}</div>
+        <div>{{ invoice.client?.zipCode }} {{ invoice.client?.city }}</div>
+      }
+    </div>
+  </div>
+
+  <div class="period-info">
+    Fakturačné obdobie: <strong>{{ formatDate(invoice.periodFrom) }} – {{ formatDate(invoice.periodTo) }}</strong>
+  </div>
+
+  <table class="items-table">
+    <thead>
+      <tr>
+        <th>Popis</th>
+        <th class="num">Množstvo</th>
+        <th class="num">J.cena</th>
+        <th class="num">Spolu</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of invoice.items; track item.id) {
+        <tr>
+          <td>{{ item.description }}</td>
+          <td class="num">{{ (+item.quantity).toFixed(2) }} {{ item.unit }}</td>
+          <td class="num">{{ formatEur(+item.unitPrice) }}</td>
+          <td class="num">{{ formatEur(+item.total) }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+
+  <div class="totals">
+    <div class="total-row">
+      <span>Základ dane</span>
+      <span>{{ formatEur(+invoice.subtotal) }}</span>
+    </div>
+    <div class="total-row">
+      <span>DPH ({{ +invoice.vatRate }}%)</span>
+      <span>{{ formatEur(+invoice.vatAmount) }}</span>
+    </div>
+    <div class="total-row total-final">
+      <span>CELKOM K ÚHRADE</span>
+      <span>{{ formatEur(+invoice.total) }}</span>
+    </div>
+  </div>
+
+  @if (invoice.notes) {
+    <div class="notes">
+      <strong>Poznámka:</strong> {{ invoice.notes }}
+    </div>
+  }
+</div>
+}

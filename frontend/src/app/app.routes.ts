@@ -32,7 +32,16 @@ export const routes: Routes = [
         path: 'settings',
         loadComponent: () => import('./features/settings/settings.component').then(m => m.SettingsComponent),
       },
+      {
+        path: 'manual-entries',
+        loadComponent: () => import('./features/manual-entries/manual-entries.component').then(m => m.ManualEntriesComponent),
+      },
     ],
+  },
+  {
+    path: 'invoices/:id/print',
+    loadComponent: () => import('./features/invoices/invoice-print/invoice-print.component').then(m => m.InvoicePrintComponent),
+    canActivate: [authGuard],
   },
   { path: '**', redirectTo: 'dashboard' },
 ];

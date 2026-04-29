@@ -101,6 +101,49 @@
       </div>
     </div>
 
+    <!-- Supplier section -->
+    <div class="card">
+      <h2 class="section-title">
+        <span class="section-icon">🏢</span>
+        Údaje dodávateľa (pre faktúry)
+      </h2>
+      <p class="section-desc">Tieto údaje sa zobrazia v sekcii <strong>Dodávateľ</strong> na každej vytlačenej faktúre.</p>
+      <div class="form-grid">
+        <div class="form-group">
+          <label class="form-label">Názov firmy / meno</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierName" placeholder="Napr. Ján Novák" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">IČO</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierIco" placeholder="12345678" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">DIČ</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierDic" placeholder="SK1234567890" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">IČ DPH</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierIcDph" placeholder="SK1234567890" />
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1">
+          <label class="form-label">Adresa</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierAddress" placeholder="Ulica 123" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Mesto</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierCity" placeholder="Bratislava" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">PSČ</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierZip" placeholder="831 01" />
+        </div>
+        <div class="form-group" style="grid-column: 1 / -1">
+          <label class="form-label">IBAN</label>
+          <input class="form-input" type="text" [(ngModel)]="form.supplierIban" placeholder="SK12 3456 7890 1234 5678 90" />
+        </div>
+      </div>
+    </div>
+
     <!-- Save button -->
     <div class="save-row">
       @if (saved()) {

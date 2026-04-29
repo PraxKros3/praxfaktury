@@ -8,6 +8,14 @@ export interface User {
   defaultVatRate: number;
   currency: string;
   invoiceDueDays: number;
+  supplierName?: string;
+  supplierIco?: string;
+  supplierDic?: string;
+  supplierIcDph?: string;
+  supplierAddress?: string;
+  supplierCity?: string;
+  supplierZip?: string;
+  supplierIban?: string;
 }
 
 export interface Client {
@@ -100,6 +108,21 @@ export interface Stats {
 export interface MonthlyEarning {
   month: number;
   amount: number;
+}
+
+export interface ManualEntry {
+  id: string;
+  userId: string;
+  clientId?: string;
+  client?: { id: string; name: string };
+  serviceName: string;
+  hourlyRate: number;
+  performedAt: string;
+  hours: number;
+  notes?: string;
+  invoiced: boolean;
+  invoiceId?: string;
+  createdAt: string;
 }
 
 export interface PagedResult<T> {

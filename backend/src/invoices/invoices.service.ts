@@ -46,26 +46,45 @@ export class InvoicesService {
 
     for (const client of clients) {
       const projectIds = client.projects.map((p) => p.id);
-      if (!projectIds.length) continue;
 
-      const entries = await this.prisma.timeEntry.findMany({
-        where: {
-          projectId: { in: projectIds },
-          startTime: { gte: periodFrom, lte: periodTo },
-          billable: true,
-          invoiced: false,
-        },
-      });
+      const [entries, manualEntries] = await Promise.all([
+        projectIds.length
+          ? this.prisma.timeEntry.findMany({
+              where: {
+                projectId: { in: projectIds },
+                startTime: { gte: periodFrom, lte: periodTo },
+                billable: true,
+                invoiced: false,
+              },
+            })
+          : this.prisma.timeEntry.findMany({ where: { id: 'none' } }),
+        this.prisma.manualEntry.findMany({
+          where: {
+            clientId: client.id,
+            performedAt: { gte: periodFrom, lte: periodTo },
+            invoiced: false,
+          },
+        }),
+      ]);
 
-      if (!entries.length) continue;
-
-      const totalSeconds = entries.reduce((sum, e) => sum + e.duration, 0);
-      const totalHours = new Decimal(totalSeconds / 3600).toDecimalPlaces(2);
+      if (!entries.length && !manualEntries.length) continue;
 
       const hourlyRate = client.hourlyRate ?? user.defaultHourlyRate;
       if (!hourlyRate) continue;
 
-      const subtotal = totalHours.mul(hourlyRate).toDecimalPlaces(2);
+      const togglSeconds = entries.reduce((sum, e) => sum + e.duration, 0);
+      const togglHours = new Decimal(togglSeconds / 3600).toDecimalPlaces(2);
+      const manualHours = manualEntries
+        .reduce((sum, e) => sum.plus(e.hours), new Decimal(0))
+        .toDecimalPlaces(2);
+      const totalHours = togglHours.plus(manualHours).toDecimalPlaces(2);
+
+      const togglSubtotal = togglHours.mul(hourlyRate).toDecimalPlaces(2);
+      const manualSubtotal = manualEntries
+        .reduce((sum, e) => sum.plus(new Decimal(e.hours.toString()).mul(e.hourlyRate.toString())), new Decimal(0))
+        .toDecimalPlaces(2);
+      const subtotal = togglSubtotal.plus(manualSubtotal).toDecimalPlaces(2);
+
       const vatRate = user.defaultVatRate;
       const vatAmount = subtotal.mul(vatRate).div(100).toDecimalPlaces(2);
       const total = subtotal.plus(vatAmount).toDecimalPlaces(2);
@@ -73,6 +92,27 @@ export class InvoicesService {
       const issueDate = new Date(year, month, 1);
       const dueDate = new Date(issueDate);
       dueDate.setDate(dueDate.getDate() + user.invoiceDueDays);
+
+      const invoiceItems: any[] = [];
+      if (togglHours.greaterThan(0)) {
+        invoiceItems.push({
+          description: `Programátorské práce ${month}/${year}`,
+          quantity: togglHours,
+          unit: 'hod',
+          unitPrice: hourlyRate,
+          total: togglSubtotal,
+        });
+      }
+      for (const me of manualEntries) {
+        const meTotal = new Decimal(me.hours.toString()).mul(me.hourlyRate.toString()).toDecimalPlaces(2);
+        invoiceItems.push({
+          description: me.serviceName + (me.notes ? ` — ${me.notes}` : ''),
+          quantity: me.hours,
+          unit: 'hod',
+          unitPrice: me.hourlyRate,
+          total: meTotal,
+        });
+      }
 
       const invoice = await this.prisma.invoice.create({
         data: {
@@ -90,24 +130,24 @@ export class InvoicesService {
           vatAmount,
           total,
           currency: user.currency,
-          items: {
-            create: [
-              {
-                description: `Programátorské práce ${month}/${year}`,
-                quantity: totalHours,
-                unit: 'hod',
-                unitPrice: hourlyRate,
-                total: subtotal,
-              },
-            ],
-          },
+          items: { create: invoiceItems },
         },
       });
 
-      await this.prisma.timeEntry.updateMany({
-        where: { id: { in: entries.map((e) => e.id) } },
-        data: { invoiced: true, invoiceId: invoice.id },
-      });
+      await Promise.all([
+        entries.length
+          ? this.prisma.timeEntry.updateMany({
+              where: { id: { in: entries.map((e) => e.id) } },
+              data: { invoiced: true, invoiceId: invoice.id },
+            })
+          : Promise.resolve(),
+        manualEntries.length
+          ? this.prisma.manualEntry.updateMany({
+              where: { id: { in: manualEntries.map((e) => e.id) } },
+              data: { invoiced: true, invoiceId: invoice.id },
+            })
+          : Promise.resolve(),
+      ]);
 
       created.push(invoice.id);
     }

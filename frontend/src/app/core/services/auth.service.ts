@@ -43,7 +43,9 @@ export class AuthService {
   loadUser() {
     this.http.get<User>(`${API}/users/me`).subscribe({
       next: (u) => this.user.set(u),
-      error: () => this.logout(),
+      error: (err) => {
+        if (err.status === 401) this.logout();
+      },
     });
   }
 }

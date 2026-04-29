@@ -56,6 +56,7 @@
               <td class="muted">{{ formatDate(inv.issueDate) }}</td>
               <td>
                 <div class="row-actions">
+                  <button class="btn btn-secondary btn-sm" (click)="printInvoice(inv)" title="Stiahnuť PDF">PDF</button>
                   @if (inv.status === 'DRAFT') {
                     <button class="btn btn-secondary btn-sm" (click)="send(inv)">Odoslať</button>
                   }
