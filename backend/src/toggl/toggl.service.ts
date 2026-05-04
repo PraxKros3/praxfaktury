@@ -52,9 +52,18 @@ export class TogglService {
     return data || [];
   }
 
+  async getMyProjects(token: string) {
+    const { data } = await firstValueFrom(
+      this.http.get(`${TOGGL_BASE}/me/projects?active=true`, {
+        headers: this.headers(token),
+      }),
+    );
+    return data || [];
+  }
+
   async getTimeEntries(token: string, startDate: Date, endDate: Date) {
-    const start = startDate.toISOString();
-    const end = endDate.toISOString();
+    const start = startDate.toISOString().split('.')[0] + 'Z';
+    const end = endDate.toISOString().split('.')[0] + 'Z';
     const { data } = await firstValueFrom(
       this.http.get(`${TOGGL_BASE}/me/time_entries?start_date=${start}&end_date=${end}`, {
         headers: this.headers(token),
@@ -74,15 +83,25 @@ export class TogglService {
 
     this.logger.log(`Syncing Toggl data for user ${userId}`);
 
-    let togglClients: any[];
-    let togglProjects: any[];
+    // Clients — graceful fallback na prázdny zoznam ak workspace API nedostupné
+    let togglClients: any[] = [];
     try {
-      [togglClients, togglProjects] = await Promise.all([
-        this.getClients(token, workspaceId),
-        this.getProjects(token, workspaceId),
-      ]);
+      togglClients = await this.getClients(token, workspaceId);
     } catch (err) {
-      this.handleTogglError(err, 'klientov/projektov');
+      this.logger.warn(`Toggl klienti nedostupní (plán/oprávnenie): ${this.extractError(err)} — preskakujem`);
+    }
+
+    // Projects — skúsi workspace endpoint, fallback na /me/projects
+    let togglProjects: any[] = [];
+    try {
+      togglProjects = await this.getProjects(token, workspaceId);
+    } catch (err) {
+      this.logger.warn(`Workspace projekty nedostupné: ${this.extractError(err)} — skúšam /me/projects`);
+      try {
+        togglProjects = await this.getMyProjects(token);
+      } catch (err2) {
+        this.logger.warn(`Toggl projekty nedostupné: ${this.extractError(err2)} — preskakujem`);
+      }
     }
 
     // Upsert clients
@@ -90,11 +109,7 @@ export class TogglService {
       await this.prisma.client.upsert({
         where: { userId_togglId: { userId, togglId: String(tc.id) } },
         update: { name: tc.name },
-        create: {
-          userId,
-          togglId: String(tc.id),
-          name: tc.name,
-        },
+        create: { userId, togglId: String(tc.id), name: tc.name },
       });
     }
 
@@ -107,30 +122,27 @@ export class TogglService {
       await this.prisma.project.upsert({
         where: { userId_togglId: { userId, togglId: String(tp.id) } },
         update: { name: tp.name, color: tp.color, clientId },
-        create: {
-          userId,
-          togglId: String(tp.id),
-          name: tp.name,
-          color: tp.color,
-          clientId,
-        },
+        create: { userId, togglId: String(tp.id), name: tp.name, color: tp.color, clientId },
       });
     }
 
-    // Sync time entries for last 90 days
+    // Time entries — vždy cez osobný endpoint, nevyžaduje workspace prístup
     const endDate = new Date();
     const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 90);
+    startDate.setDate(startDate.getDate() - 89);
 
     let entries: any[];
     try {
       entries = await this.getTimeEntries(token, startDate, endDate);
     } catch (err) {
-      this.handleTogglError(err, 'časových záznamov');
+      const axiosErr = err as AxiosError;
+      const status = axiosErr?.response?.status;
+      if (status === 401) throw new BadRequestException('Neplatný Toggl API token');
+      if (status === 429) throw new InternalServerErrorException('Toggl API rate limit — skúste neskôr');
+      throw new InternalServerErrorException(`Toggl API chyba: ${this.extractError(err)}`);
     }
 
     let synced = 0;
-
     for (const te of entries) {
       if (!te.stop) continue;
 
@@ -183,25 +195,13 @@ export class TogglService {
     };
   }
 
-  private handleTogglError(err: any, context: string): never {
+  private extractError(err: any): string {
     const axiosErr = err as AxiosError;
     if (axiosErr?.response) {
-      const status = axiosErr.response.status;
-      const body = JSON.stringify(axiosErr.response.data);
-      this.logger.error(`Toggl API chyba pri načítaní ${context}: HTTP ${status} - ${body}`);
-      if (status === 401) {
-        throw new BadRequestException('Neplatný Toggl API token');
-      }
-      if (status === 403) {
-        throw new BadRequestException('Neplatný Toggl Workspace ID — skontroluj nastavenia');
-      }
-      if (status === 429) {
-        throw new InternalServerErrorException('Toggl API rate limit - skúste to neskôr');
-      }
-      throw new InternalServerErrorException(`Toggl API vrátilo chybu ${status}`);
+      const body = axiosErr.response.data ? JSON.stringify(axiosErr.response.data) : '';
+      return `HTTP ${axiosErr.response.status}${body ? ` — ${body}` : ''}`;
     }
-    this.logger.error(`Toggl sieťová chyba pri načítaní ${context}: ${err.message}`, err.stack);
-    throw new InternalServerErrorException(`Toggl API je nedostupné: ${err.message}`);
+    return err?.message || 'unknown';
   }
 
   private async findClientByTogglId(userId: string, togglId: string): Promise<string | null> {
